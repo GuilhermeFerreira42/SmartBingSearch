@@ -12,7 +12,6 @@
     body {
       font-family: 'Inter', sans-serif;
     }
-    /* Remove setas de inputs numéricos */
     input[type='number']::-webkit-inner-spin-button,
     input[type='number']::-webkit-outer-spin-button {
       -webkit-appearance: none;
@@ -21,7 +20,6 @@
     input[type='number'] {
       -moz-appearance: textfield;
     }
-    /* Rotação suave para ícones de acordeão */
     .transition-transform {
       transition: transform 0.3s ease;
     }
@@ -38,7 +36,7 @@
           Pesquisa Avançada no Bing
         </h1>
         <input autocomplete="off" class="flex-grow w-full md:w-auto rounded-lg border border-gray-300 shadow-sm px-4 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="searchInput" name="searchInput" placeholder="Digite sua pesquisa aqui..." required type="text" value="{{ query or '' }}" />
-        <input aria-label="Número de resultados" class="w-20 text-center rounded-lg border border-gray-300 shadow-sm px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="numResults" max="50" min="1" name="numResults" required type="number" value="{{ num_results or '10' }}" />
+        <input aria-label="Número de resultados desejados (1-50)" class="w-24 text-center rounded-lg border border-gray-300 shadow-sm px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="numResults" max="50" min="1" name="numResults" required type="number" value="{{ num_results or '10' }}" title="Número de resultados desejados (1-50)" />
         <button aria-label="Pesquisar" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1" type="submit">
           <i class="fas fa-search"></i>
           Pesquisar
@@ -46,8 +44,8 @@
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-4 gap-6">
-      <aside class="md:col-span-1 bg-white rounded-lg shadow-sm p-4 flex flex-col gap-6 self-start">
+    <main class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-4 gap-6 w-full">
+      <aside class="md:col-span-1 bg-white rounded-lg shadow-sm p-4 flex flex-col gap-6 h-[78vh] overflow-y-auto">
         <div class="flex justify-between items-center border-b border-gray-200 pb-2">
             <h2 class="text-lg font-semibold text-gray-900">Filtros</h2>
             <button aria-label="Limpar Campos" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-sm px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1" id="clearButton" type="button" title="Limpar todos os filtros">
@@ -109,9 +107,9 @@
         </div>
       </aside>
 
-      <section class="md:col-span-3 bg-white rounded-lg shadow-sm p-6 relative flex flex-col" id="resultsSection">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b border-gray-200 pb-2">Resultados da Pesquisa</h2>
-          <div class="space-y-4 overflow-y-auto" id="searchResults">
+      <section class="md:col-span-3 bg-white rounded-lg shadow-sm p-6 relative flex flex-col h-[78vh]">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b border-gray-200 pb-2 flex-shrink-0">Resultados da Pesquisa</h2>
+          <div class="space-y-4 overflow-y-auto flex-grow" id="searchResults">
               {% if error %}
                   <p class="text-red-600 text-center bg-red-100 p-4 rounded-md">{{ error }}</p>
               {% elif results is defined %}
@@ -139,7 +137,7 @@
           <div id="loadingOverlay" class="hidden absolute inset-0 flex flex-col justify-center items-center rounded-lg bg-white bg-opacity-85 z-10">
               <div class="bg-white p-8 rounded-lg shadow-lg text-center border border-blue-200">
                   <h3 class="text-lg font-semibold text-gray-800 mb-2">Analisando...</h3>
-                  <p class="text-sm text-gray-600 mb-4">Estamos buscando e filtrando os resultados. Isso pode levar alguns segundos.</p>
+                  <p class="text-sm text-gray-600 mb-4">Buscando e filtrando os resultados. Isso pode levar alguns segundos.</p>
                   <div class="w-full bg-gray-200 rounded-full h-4">
                       <div id="progressBar" class="bg-blue-600 h-4 rounded-full transition-all duration-500 ease-linear" style="width: 0%"></div>
                   </div>
@@ -148,64 +146,66 @@
           </div>
       </section>
     </main>
-  </form> <footer class="bg-white mt-auto border-t border-gray-200">
+  </form>
+
+  <footer class="bg-white mt-auto border-t border-gray-200 flex-shrink-0">
       <div class="max-w-4xl mx-auto px-4 py-4 text-center text-gray-500 text-sm">
           &copy; 2025 Pesquisa Avançada - Desenvolvido com Flask e BeautifulSoup
       </div>
   </footer>
 
   <script>
-    // Lógica do Acordeão para os filtros
-    document.querySelectorAll('.accordion-toggle').forEach(button => {
-      button.addEventListener('click', () => {
-        const panel = button.nextElementSibling;
-        const icon = button.querySelector('i.fas');
-        const isExpanded = button.getAttribute('aria-expanded') === 'true';
+    document.addEventListener('DOMContentLoaded', function() {
+        // Lógica do Acordeão
+        document.querySelectorAll('.accordion-toggle').forEach(button => {
+            button.addEventListener('click', () => {
+                const panel = button.nextElementSibling;
+                const icon = button.querySelector('i.fas');
+                const isExpanded = button.getAttribute('aria-expanded') === 'true';
 
-        button.setAttribute('aria-expanded', !isExpanded);
-        panel.classList.toggle('hidden');
-        icon.classList.toggle('rotate-180');
-      });
-    });
+                button.setAttribute('aria-expanded', !isExpanded);
+                panel.classList.toggle('hidden');
+                icon.classList.toggle('rotate-180');
+            });
+        });
 
-    // Lógica do botão de limpar
-    document.getElementById('clearButton').addEventListener('click', () => {
-      document.getElementById('searchForm').reset(); // Método mais simples para limpar o formulário
-      document.getElementById('numResults').value = '10'; // Reseta o número de resultados
+        // Lógica do Botão Limpar
+        document.getElementById('clearButton').addEventListener('click', () => {
+            const form = document.getElementById('searchForm');
+            form.reset();
+            document.getElementById('numResults').value = '10';
 
-      // Limpa os resultados e mostra a mensagem inicial
-      const resultsContainer = document.getElementById('searchResults');
-      resultsContainer.innerHTML = `
-        <div class="text-center py-10 px-4">
-            <p class="text-gray-700 font-semibold">Pronto para começar?</p>
-            <p class="text-gray-500 text-sm mt-1">Os resultados da sua pesquisa aparecerão aqui.</p>
-        </div>
-      `;
-    });
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = `
+                <div class="text-center py-10 px-4">
+                    <p class="text-gray-700 font-semibold">Pronto para começar?</p>
+                    <p class="text-gray-500 text-sm mt-1">Os resultados da sua pesquisa aparecerão aqui.</p>
+                </div>
+            `;
+        });
 
-    // Lógica de submissão do formulário com feedback de carregamento
-    document.getElementById('searchForm').addEventListener('submit', function(event) {
-      if (document.getElementById('searchInput').value.trim() === '') {
-        event.preventDefault(); // Impede a submissão se a busca estiver vazia
-        return;
-      }
+        // Lógica da Submissão do Formulário
+        document.getElementById('searchForm').addEventListener('submit', function(event) {
+            if (document.getElementById('searchInput').value.trim() === '') {
+                event.preventDefault();
+                return;
+            }
 
-      // Mostra o overlay de carregamento
-      document.getElementById('loadingOverlay').classList.remove('hidden');
-      const progressBar = document.getElementById('progressBar');
-      const progressText = document.getElementById('progressText');
-      let width = 0;
-      
-      // Simula o progresso
-      const interval = setInterval(function() {
-        if (width >= 95) {
-          clearInterval(interval);
-        } else {
-          width++;
-          progressBar.style.width = width + '%';
-          progressText.innerText = width + '%';
-        }
-      }, 100);
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            let width = 0;
+            
+            const interval = setInterval(function() {
+                if (width >= 95) {
+                    clearInterval(interval);
+                } else {
+                    width++;
+                    progressBar.style.width = width + '%';
+                    progressText.innerText = width + '%';
+                }
+            }, 150);
+        });
     });
   </script>
 </body>
