@@ -8,8 +8,8 @@ import random
 
 app = Flask(__name__)
 
-# Constante para o número máximo de páginas a serem pesquisadas
-MAX_PAGES_TO_SEARCH = 5
+# Constante para o número máximo de páginas a serem pesquisadas como salvaguarda
+MAX_PAGES_SAFEGUARD = 50
 
 def search_bing_page(query, page_number=0):
     """
@@ -127,6 +127,20 @@ def filter_links_directly(links, direct_include_links=None, direct_exclude_links
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    context = {
+        'query': '',
+        'include_words': '',
+        'exclude_words': '',
+        'link_include_words': '',
+        'link_exclude_words': '',
+        'direct_include_links': '',
+        'direct_exclude_links': '',
+        'num_results': 10,
+        'content_filters_expanded': True, # Inicia aberto por padrão
+        'url_filters_expanded': False,
+        'url_lists_expanded': False
+    }
+
     if request.method == 'POST':
         query = request.form.get('searchInput', '').strip()
         include_words = request.form.get('includeWords', '').strip()
@@ -136,9 +150,28 @@ def index():
         direct_include_links = request.form.get('directIncludeLinks', '').strip()
         direct_exclude_links = request.form.get('directExcludeLinks', '').strip()
         num_results_str = request.form.get('numResults', '10')
+        
+        # Manter o estado dos acordeões
+        content_filters_expanded = request.form.get('content_filters_expanded') == 'true'
+        url_filters_expanded = request.form.get('url_filters_expanded') == 'true'
+        url_lists_expanded = request.form.get('url_lists_expanded') == 'true'
+
+        context.update({
+            'query': query,
+            'include_words': include_words,
+            'exclude_words': exclude_words,
+            'link_include_words': link_include_words,
+            'link_exclude_words': link_exclude_words,
+            'direct_include_links': direct_include_links,
+            'direct_exclude_links': direct_exclude_links,
+            'content_filters_expanded': content_filters_expanded,
+            'url_filters_expanded': url_filters_expanded,
+            'url_lists_expanded': url_lists_expanded
+        })
 
         if not query:
-            return render_template('index.html', error="Por favor, digite um termo para pesquisar.")
+            context['error'] = "Por favor, digite um termo para pesquisar."
+            return render_template('index.html', **context)
 
         try:
             num_results_desired = int(num_results_str)
@@ -146,22 +179,21 @@ def index():
                 num_results_desired = 10
         except (ValueError, TypeError):
             num_results_desired = 10
+        
+        context['num_results'] = num_results_desired
 
         final_links = []
         processed_links = set()
+        page = 0
 
-        # Nova lógica de busca e filtro em loop
-        for page in range(MAX_PAGES_TO_SEARCH):
-            if len(final_links) >= num_results_desired:
-                break # Atingimos o número de resultados desejado
-
+        # Loop para buscar até atingir o número desejado de resultados ou o limite de segurança
+        while len(final_links) < num_results_desired and page < MAX_PAGES_SAFEGUARD:
             print(f"Buscando na página {page + 1}...")
             links_from_page = search_bing_page(query, page_number=page)
 
-            if links_from_page is None: # Ocorreu um CAPTCHA
+            if links_from_page is None: # Ocorreu um CAPTCHA ou erro
                 break
 
-            # Evita processar links duplicados que possam aparecer em várias páginas
             new_links = [link for link in links_from_page if link not in processed_links]
             processed_links.update(new_links)
             
@@ -176,23 +208,16 @@ def index():
                 filtered_content_links = links
 
             final_links.extend(filtered_content_links)
+            page += 1
 
         # Garante que não haja duplicatas e limita ao número desejado
         unique_final_links = list(dict.fromkeys(final_links))[:num_results_desired]
         final_results = [{'title': link, 'link': link} for link in unique_final_links]
 
-        return render_template('index.html', 
-                               results=final_results, 
-                               query=query, 
-                               include_words=include_words,
-                               exclude_words=exclude_words, 
-                               link_include_words=link_include_words,
-                               link_exclude_words=link_exclude_words, 
-                               direct_include_links=direct_include_links,
-                               direct_exclude_links=direct_exclude_links,
-                               num_results=num_results_desired)
+        context['results'] = final_results
+        return render_template('index.html', **context)
 
-    return render_template('index.html')
+    return render_template('index.html', **context)
 
 if __name__ == '__main__':
     app.run(debug=True)
